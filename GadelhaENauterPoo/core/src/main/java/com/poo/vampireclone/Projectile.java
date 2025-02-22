@@ -8,17 +8,23 @@ public class Projectile {
     public float x, y, speed = 200;
     private float directionX, directionY;
     private float distanceTraveled = 0;
-    private final float MAX_DISTANCE = 300;
+    private final float MAX_DISTANCE;
+    private final float SIZE;
     private Texture texture;
 
-    public Projectile(float x, float y, float targetX, float targetY) {
+    public Projectile(float x, float y, float targetX, float targetY, float maxDistance, float size) {
         this.x = x;
         this.y = y;
+        this.MAX_DISTANCE = maxDistance;
+        this.SIZE = size;
+        
+        // Calcula a direção do projétil
         float dx = targetX - x;
         float dy = targetY - y;
         float length = (float) Math.sqrt(dx * dx + dy * dy);
         this.directionX = dx / length;
         this.directionY = dy / length;
+        
         texture = new Texture("projectile.png"); // Certifique-se de que a imagem exista!
     }
 
@@ -34,7 +40,7 @@ public class Projectile {
     }
 
     public void render(SpriteBatch batch) {
-        batch.draw(texture, x, y);
+        batch.draw(texture, x, y, SIZE, SIZE);  // Desenha o projétil com o tamanho variável
     }
 
     public void dispose() {

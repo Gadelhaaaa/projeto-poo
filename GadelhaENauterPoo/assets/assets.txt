@@ -2,3 +2,5 @@ enemy.png
 libgdx.png
 player.png
 projectile.png
+weapons/pistol.png
+weapons/shotgun.png

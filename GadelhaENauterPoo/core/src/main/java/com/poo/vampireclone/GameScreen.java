@@ -3,7 +3,6 @@ package com.poo.vampireclone;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import java.util.ArrayList;
@@ -11,133 +10,132 @@ import java.util.List;
 
 public class GameScreen implements Screen {
     private VampireCloneGame game;
-    private Texture playerTexture;
-    private float playerX, playerY;
+    private Player player;
     private List<Enemy> enemies;
     private List<Projectile> projectiles;
-    private float shootCooldown = 0.9f;
+    private float shootCooldown = 1.2f;
     private float shootTimer = 0;
     private List<Enemy> toRemoveEnemies;
     private List<Projectile> toRemoveProjectiles;
     private int enemiesKilled = 0;
     private int level = 1;
-    private final int MAX_LEVEL = 20;
-    private final int BASE_ENEMIES = 5;
+    private final int MAX_LEVEL = 300;
+    private final int BASE_ENEMIES = 3;
     private BitmapFont font;
     private SpriteBatch batch;
+    private final int SCREEN_WIDTH = 1280;
+    private final int SCREEN_HEIGHT = 720;
+    private float enemyDamageCooldown = 1.0f;
+    private float enemyDamageTimer = 0;
 
     public GameScreen(VampireCloneGame game) {
         this.game = game;
         projectiles = new ArrayList<>();
         toRemoveEnemies = new ArrayList<>();
         toRemoveProjectiles = new ArrayList<>();
-        playerTexture = new Texture("player.png");
-        font = new BitmapFont(); // Inicializando a fonte
-        font.getData().setScale(2); // Aumentando o tamanho da fonte para ser mais legível
-        font.setColor(1, 1, 0, 1); // Definindo a cor da fonte para amarelo
+        font = new BitmapFont();
         batch = new SpriteBatch();
-        playerX = 400;
-        playerY = 300;
+        player = new Player(SCREEN_WIDTH / 2f, SCREEN_HEIGHT / 2f);
         enemies = new ArrayList<>();
         spawnEnemies(BASE_ENEMIES);
-    }
-
-    private void updatePlayer(float delta) {
-        float speed = 200 * delta;
-        if (Gdx.input.isKeyPressed(com.badlogic.gdx.Input.Keys.W)) playerY += speed;
-        if (Gdx.input.isKeyPressed(com.badlogic.gdx.Input.Keys.S)) playerY -= speed;
-        if (Gdx.input.isKeyPressed(com.badlogic.gdx.Input.Keys.A)) playerX -= speed;
-        if (Gdx.input.isKeyPressed(com.badlogic.gdx.Input.Keys.D)) playerX += speed;
     }
 
     private void spawnEnemies(int count) {
         for (int i = 0; i < count; i++) {
             float enemyX, enemyY;
             do {
-                enemyX = (float) Math.random() * 800;
-                enemyY = (float) Math.random() * 600;
-            } while (Math.abs(enemyX - playerX) < 50 || Math.abs(enemyY - playerY) < 50);
+                enemyX = (float) Math.random() * SCREEN_WIDTH;
+                enemyY = (float) Math.random() * SCREEN_HEIGHT;
+            } while (Math.abs(enemyX - player.getX()) < 50 || Math.abs(enemyY - player.getY()) < 50);
             enemies.add(new Enemy(enemyX, enemyY));
         }
     }
 
     @Override
     public void render(float delta) {
-        updatePlayer(delta);
+        player.update(delta);
+        enemyDamageTimer += delta;
 
-        // Atualiza inimigos
         for (Enemy enemy : enemies) {
-            enemy.update(playerX, playerY, delta);
-        }
-
-        // Disparo de projéteis
-        shootTimer += delta;
-        float targetX = Gdx.input.getX();
-        float targetY = Gdx.graphics.getHeight() - Gdx.input.getY();
-
-        if (shootTimer >= shootCooldown) {
-            shootTimer = 0;
-            projectiles.add(new Projectile(playerX, playerY, targetX, targetY));
-        }
-
-        // Verifica colisões
-        for (Projectile projectile : projectiles) {
-            for (Enemy enemy : enemies) {
-                float distance = (float) Math.sqrt(Math.pow(projectile.getX() - enemy.getX(), 2) + Math.pow(projectile.getY() - enemy.getY(), 2));
-                if (distance < 20) {
-                    toRemoveEnemies.add(enemy);
-                    toRemoveProjectiles.add(projectile);
-                    enemiesKilled++;
-                    break;
-                }
+            enemy.update(player.getX(), player.getY(), delta);
+            if (enemy.collidesWith(player.getX(), player.getY()) && enemyDamageTimer >= enemyDamageCooldown) {
+                player.takeDamage(1);
+                enemyDamageTimer = 0;
             }
         }
 
-        // Remove inimigos e projéteis
+        for (Enemy enemy : enemies) {
+            float direction = player.getX() - enemy.getX();
+            boolean facingLeft = enemy.isFlipped();
+            
+            if (direction > 0 && facingLeft) { 
+                enemy.flip(false);
+            } else if (direction < 0 && !facingLeft) {
+                enemy.flip(true);
+            }
+        }
+
+        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+        batch.begin();
+        player.render(batch);
+        
+        for (Enemy enemy : enemies) {
+            enemy.render(batch);
+        }
+
+        shootCooldown = Math.max(0.2f, 1.2f - (level * 0.005f));
+        shootTimer += delta;
+        float targetX = Gdx.input.getX();
+        float targetY = SCREEN_HEIGHT - Gdx.input.getY();
+
+        if (shootTimer >= shootCooldown) {
+            shootTimer = 0;
+            projectiles.add(new Projectile(player.getX(), player.getY(), targetX, targetY, 250 + (level * 8), 10));
+        }
+
+        for (Projectile projectile : projectiles) {
+            for (Enemy enemy : enemies) {
+                if (enemy.collidesWith(projectile.getX(), projectile.getY())) {
+                    toRemoveEnemies.add(enemy);
+                    toRemoveProjectiles.add(projectile);
+                    enemiesKilled++;
+                }
+            }
+        }
         enemies.removeAll(toRemoveEnemies);
         projectiles.removeAll(toRemoveProjectiles);
 
-        // Verifica nível
-        if (enemiesKilled >= level * 5 && level < MAX_LEVEL) {
-            level++;
-            spawnEnemies(BASE_ENEMIES + level);
+        if (enemiesKilled % 10 == 0 && enemiesKilled > 0) {
+            player.restoreHealth();
         }
 
-        // Atualiza projéteis
+        if (enemiesKilled >= level * 3 && level < MAX_LEVEL) {
+            level++;
+            spawnEnemies(BASE_ENEMIES + Math.min(level, 5));
+        }
+
         for (Projectile projectile : projectiles) {
             projectile.update(delta, toRemoveProjectiles);
         }
         projectiles.removeAll(toRemoveProjectiles);
 
-        // Renderiza o jogo
-        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
-        batch.begin();
-
-        // Desenha projéteis, jogador e inimigos
         for (Projectile projectile : projectiles) {
             projectile.render(batch);
         }
-        batch.draw(playerTexture, playerX, playerY);
-        for (Enemy enemy : enemies) {
-            enemy.render(batch);
-        }
 
-        batch.end();
-
-        // Renderiza o HUD (kills e level)
-        batch.begin();
-
-        // Exibe kills e level no canto superior esquerdo
-        font.draw(batch, "Kills: " + enemiesKilled, 20, Gdx.graphics.getHeight() - 20);
-        font.draw(batch, "Level: " + level, 20, Gdx.graphics.getHeight() - 50);
+        font.getData().setScale(2);
+        font.setColor(1, 1, 1, 1);
+        font.draw(batch, "Kills: " + enemiesKilled, 20, SCREEN_HEIGHT - 20);
+        font.draw(batch, "Level: " + level, 20, SCREEN_HEIGHT - 50);
+        font.draw(batch, "HP: " + player.getHealth(), 20, SCREEN_HEIGHT - 80);
 
         batch.end();
     }
 
     @Override
     public void dispose() {
-        playerTexture.dispose();
         font.dispose();
+        player.dispose();
         for (Enemy enemy : enemies) {
             enemy.dispose();
         }
