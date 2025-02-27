@@ -1,7 +1,7 @@
 package com.poo.vampireclone;
 
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.Input;
+import com.badlogic.gdx.Input;  // Certifique-se de importar corretamente
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
@@ -11,7 +11,7 @@ public class Player {
     private int health;
     private Texture texture;
     private TextureRegion region;
-    private float speed = 150; // Velocidade do jogador
+    private float speed = 150;
 
     public Player(float x, float y) {
         this.x = x;
@@ -24,8 +24,8 @@ public class Player {
     public void update(float delta) {
         float moveSpeed = speed * delta;
 
-        boolean movingLeft = Gdx.input.isKeyPressed(Input.Keys.A);
-        boolean movingRight = Gdx.input.isKeyPressed(Input.Keys.D);
+        boolean movingLeft = Gdx.input.isKeyPressed(Input.Keys.A);  // Garante que a tecla A está pressionada
+        boolean movingRight = Gdx.input.isKeyPressed(Input.Keys.D);  // Garante que a tecla D está pressionada
 
         if (movingLeft) {
             x -= moveSpeed;
@@ -64,7 +64,7 @@ public class Player {
         this.health -= amount;
     }
 
-    public int getHealth() { // Método adicionado
+    public int getHealth() {
         return health;
     }
 
@@ -78,5 +78,16 @@ public class Player {
 
     public void dispose() {
         texture.dispose();
+    }
+
+    
+
+    // Novos métodos para obter o tamanho da textura
+    public float getTextureWidth() {
+        return texture.getWidth();
+    }
+
+    public float getTextureHeight() {
+        return texture.getHeight();
     }
 }

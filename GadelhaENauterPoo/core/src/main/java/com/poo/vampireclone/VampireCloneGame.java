@@ -8,10 +8,8 @@ public class VampireCloneGame extends Game {
 
     @Override
     public void create() {
-        batch = new SpriteBatch();
-        this.setScreen(new GameScreen(this));  // Passando corretamente o GameScreen
+        setScreen(new MainMenuScreen(this));
     }
-
     @Override
     public void render() {
         super.render();  // Chamando o método render da classe Game
@@ -21,4 +19,6 @@ public class VampireCloneGame extends Game {
     public void dispose() {
         batch.dispose();
     }
+
+    
 }

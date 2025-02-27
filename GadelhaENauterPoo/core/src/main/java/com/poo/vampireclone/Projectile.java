@@ -2,6 +2,7 @@ package com.poo.vampireclone;
 
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.Gdx;
 import java.util.List;
 
 public class Projectile {
@@ -12,20 +13,26 @@ public class Projectile {
     private final float SIZE;
     private Texture texture;
 
-    public Projectile(float x, float y, float targetX, float targetY, float maxDistance, float size) {
+    public Projectile(float x, float y, float targetX, float targetY, float maxDistance, float size, int level, String texturePath) {
         this.x = x;
         this.y = y;
         this.MAX_DISTANCE = maxDistance;
         this.SIZE = size;
-        
+
+        // Verifica se o caminho da textura foi passado corretamente
+        if (texturePath == null || texturePath.isEmpty()) {
+            texturePath = "projectile.png"; // Define um padrão caso nada seja passado
+        }
+
+        // Carrega a textura corretamente do diretório assets
+        this.texture = new Texture(Gdx.files.internal(texturePath));
+
         // Calcula a direção do projétil
         float dx = targetX - x;
         float dy = targetY - y;
         float length = (float) Math.sqrt(dx * dx + dy * dy);
         this.directionX = dx / length;
         this.directionY = dy / length;
-        
-        texture = new Texture("projectile.png"); // Certifique-se de que a imagem exista!
     }
 
     // Atualiza o projétil

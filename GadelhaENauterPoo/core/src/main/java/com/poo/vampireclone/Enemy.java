@@ -24,16 +24,17 @@ public class Enemy {
         float dy = playerY - y;
         float distance = (float) Math.sqrt(dx * dx + dy * dy);
 
+        // Movimenta apenas se necessário
         if (distance > 15) {
             x += (dx / distance) * speed * delta;
             y += (dy / distance) * speed * delta;
         }
-    }
 
-    public void flip(boolean flipX) {
-        if (flipped != flipX) { 
+        // Flip otimizado
+        boolean flipRequired = (dx > 0 && flipped) || (dx < 0 && !flipped);
+        if (flipRequired) {
             textureRegion.flip(true, false);
-            flipped = flipX;
+            flipped = !flipped;
         }
     }
 
